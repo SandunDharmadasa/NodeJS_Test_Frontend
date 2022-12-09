@@ -9,7 +9,7 @@ const Products = () => {
       
         axios.get('http://localhost:5000/product/get').then((res)=>{
                 setViewProducts(res.data.data)
-                console.log(res.data)
+             
         }).catch((err)=>{
                console.error(err)
         });
