@@ -1,23 +1,52 @@
 import React from 'react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
 import axios from 'axios';
+import { Modal } from "react-bootstrap";
+import AddToCart from './AddToCart';
 
-const Products = () => {
-    const [viewProducts, setViewProducts] = useState([]);
+const Products = forwardRef((props, ref) => {
+    const [show, setShow] = useState(false);
+
+    const handleClose = () => setShow(false);
+    const handleShow = () => setShow(true);
+
+    const [products, setProducts] = useState([]);
+    const [product, setProduct] = useState({});
+
+
+    useImperativeHandle(ref, () => ({
+        callpresentationList() {
+            getProduct().then()
+        }
+    }));
 
     useEffect(() => {
-      
-        axios.get('http://localhost:5000/product/get').then((res)=>{
-                setViewProducts(res.data.data)
-             
-        }).catch((err)=>{
-               console.error(err)
-        });
-         
-       
+        getProduct().then();
     }, []);
 
- 
+    //Get all the Products function
+    const getProduct = async () => {
+        await axios.get("http://localhost:5000/product/get")
+          .then((res) => {
+            console.log(res.data.data);
+            setProducts(res.data.data);
+          }).catch((err) => {
+            console.log(err);
+          });
+      }
+
+      async function showModal(event, products) {
+        event.preventDefault();
+        setProduct(products);
+        handleShow();
+    }
+
+      async function hideModal() {
+        handleClose();
+        setProduct({});
+        getProduct().then();
+        
+    }
 
     return(
         <>
@@ -33,17 +62,18 @@ const Products = () => {
                     </thead>
 
                     <tbody>
-                        {viewProducts.length > 0 ? (
-                            viewProducts.map((product,index) => (
+                        
+                        {products.length > 0 ? (
+                            products.map((product,index) => (
                                 <tr key={index}>
                                    <td>{product.name}</td> 
                                    <td>{product.description}</td> 
                                    <td>{product.qty}</td> 
                                    <td>{product.price}</td> 
                                    <td>
-                                        <a className="btn btn-warning" href='/products'>
-                                            <i className="far fa-mark"></i>Add To cart
-                                        </a>
+                                   <button className="btn btn-warning" onClick={(e) => showModal(e, product)}>
+                                                <i className="las la-edit" />Add To Cart
+                                            </button>
                                     </td>
                                 </tr>
                             )
@@ -59,8 +89,24 @@ const Products = () => {
                     </tbody>
                 </table>
         </div>
+        <div>
+                <a className="button" href='/cart'>
+                <i className="far fa-mark"></i>View Cart
+                </a>
+                </div>
+        <div>
+            <Modal show={show} onHide={handleClose}>
+                <Modal.Header closeButton>
+                    <Modal.Title>Add To Cart</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    <AddToCart product={product} hideModal={hideModal}/>
+                </Modal.Body>
+            </Modal>
+        </div> 
+        
         </>
     )
-}
+});
 
 export default Products
